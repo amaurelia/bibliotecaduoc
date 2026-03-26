@@ -1,0 +1,137 @@
+{
+  "info": {
+    "_postman_id": "4f18b0c4-a9ed-4cc7-91c1-9f6ea6e1cf18",
+    "name": "BibliotecaDuoc API",
+    "description": "Colección de endpoints para el proyecto bibliotecaduoc.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Listar libros",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/libros",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "libros"
+          ]
+        },
+        "description": "Retorna todos los libros en memoria."
+      },
+      "response": []
+    },
+    {
+      "name": "Buscar libro por ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/libros/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "libros",
+            "1"
+          ]
+        },
+        "description": "Busca un libro por id."
+      },
+      "response": []
+    },
+    {
+      "name": "Crear libro",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id\": 1,\n  \"isbn\": \"9789561234567\",\n  \"titulo\": \"Clean Code\",\n  \"editorial\": \"Prentice Hall\",\n  \"fechaPublicacion\": 2008,\n  \"autor\": \"Robert C. Martin\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/libros",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "libros"
+          ]
+        },
+        "description": "Crea un libro nuevo."
+      },
+      "response": []
+    },
+    {
+      "name": "Actualizar libro",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id\": 1,\n  \"isbn\": \"9789561234567\",\n  \"titulo\": \"Clean Code (Edición actualizada)\",\n  \"editorial\": \"Prentice Hall\",\n  \"fechaPublicacion\": 2009,\n  \"autor\": \"Robert C. Martin\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/libros/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "libros",
+            "1"
+          ]
+        },
+        "description": "Actualiza un libro existente por id."
+      },
+      "response": []
+    },
+    {
+      "name": "Eliminar libro",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/libros/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "libros",
+            "1"
+          ]
+        },
+        "description": "Elimina un libro por id."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ]
+}
