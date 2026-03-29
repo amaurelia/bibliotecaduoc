@@ -197,6 +197,21 @@ Campos actuales:
 - `fechaPublicacion`
 - `autor`
 
+Anotaciones de validación y persistencia usadas:
+
+- `@Id`
+	- Marca el identificador de la entidad.
+	- En este proyecto sirve para señalar que `id` es la clave del libro.
+	- Nota: como el repositorio actual es en memoria (`List<Libro>`), no hay persistencia real en base de datos todavía.
+
+- `@NotNull`
+	- Exige que el valor no sea `null`.
+	- Se usa en `id` y `fechaPublicacion`.
+
+- `@NotBlank`
+	- Exige que el texto no sea `null`, no esté vacío (`""`) y no tenga solo espacios.
+	- Se usa en `isbn`, `titulo`, `editorial` y `autor`.
+
 Anotaciones de Lombok usadas:
 
 - `@Data`
@@ -212,6 +227,35 @@ Anotaciones de Lombok usadas:
 	- Genera un constructor **vacío** (sin parámetros).
 
 Esto evita escribir mucho código repetitivo (boilerplate).
+
+### 5.5 Clase principal de la aplicación
+
+Archivo: `BibliotecaduocApplication`.
+
+- `@SpringBootApplication`
+	- Es una anotación compuesta que incluye configuración automática de Spring Boot y escaneo de componentes.
+	- Indica el punto de inicio de la aplicación.
+
+### 5.6 Pruebas
+
+Archivo: `BibliotecaduocApplicationTests`.
+
+- `@SpringBootTest`
+	- Levanta el contexto completo de Spring para pruebas de integración.
+
+- `@Test`
+	- Marca un método como caso de prueba en JUnit 5.
+
+### 5.7 Resumen completo de anotaciones del proyecto
+
+Estas son **todas** las anotaciones usadas actualmente en el código fuente:
+
+- Spring Web/API: `@RestController`, `@RequestMapping`, `@GetMapping`, `@PostMapping`, `@PutMapping`, `@DeleteMapping`, `@RequestBody`, `@PathVariable`
+- Inyección y estereotipos Spring: `@Autowired`, `@Service`, `@Repository`
+- Spring Boot: `@SpringBootApplication`, `@SpringBootTest`
+- Validación/Persistencia Jakarta: `@Id`, `@NotBlank`, `@NotNull`
+- Lombok: `@Data`, `@AllArgsConstructor`, `@NoArgsConstructor`
+- Testing JUnit: `@Test`
 
 ---
 
@@ -241,6 +285,12 @@ Incluye todos los endpoints:
 
 - `spring-boot-starter-webmvc`
 	- Para construir API REST.
+
+- `spring-boot-starter-validation`
+	- Soporte de validaciones con anotaciones como `@NotBlank` y `@NotNull`.
+
+- `jakarta.persistence-api`
+	- API de persistencia Jakarta (incluye anotaciones como `@Id`).
 
 - `lombok`
 	- Para reducir código repetitivo en modelos.
