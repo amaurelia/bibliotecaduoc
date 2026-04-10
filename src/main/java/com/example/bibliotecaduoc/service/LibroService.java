@@ -8,6 +8,7 @@ import java.util.List;
 
 @Service
 public class LibroService {
+
     @Autowired
     private LibroRepository libroRepository;
 
@@ -27,8 +28,7 @@ public class LibroService {
         return libroRepository.actualizar(libro);
     }
 
-    public String deleteLibro(int id) {
+    public void deleteLibro(int id) {
         libroRepository.eliminar(id);
-        return "producto eliminado";
     }
 }
