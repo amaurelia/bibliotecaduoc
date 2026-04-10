@@ -24,11 +24,7 @@ public class LibroController {
 
     @PostMapping
     public ResponseEntity<Libro> agregarLibro(@Valid @RequestBody Libro libro) {
-        Libro guardado = libroService.saveLibro(libro);
-        if (guardado == null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
+        return ResponseEntity.status(HttpStatus.CREATED).body(libroService.saveLibro(libro));
     }
 
     @GetMapping("/{id}")

@@ -4,6 +4,7 @@ import com.example.bibliotecaduoc.model.Libro;
 import com.example.bibliotecaduoc.repository.LibroRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
@@ -13,22 +14,25 @@ public class LibroService {
     private LibroRepository libroRepository;
 
     public List<Libro> getLibros() {
-        return libroRepository.obtenerLibros();
+        return libroRepository.findAll();
     }
 
     public Libro saveLibro(Libro libro) {
-        return libroRepository.guardar(libro);
+        return libroRepository.save(libro);
     }
 
     public Libro getLibroId(int id) {
-        return libroRepository.buscarPorId(id);
+        return libroRepository.findById(id).orElse(null);
     }
 
     public Libro updateLibro(Libro libro) {
-        return libroRepository.actualizar(libro);
+        if (!libroRepository.existsById(libro.getId())) {
+            return null;
+        }
+        return libroRepository.save(libro);
     }
 
     public void deleteLibro(int id) {
-        libroRepository.eliminar(id);
+        libroRepository.deleteById(id);
     }
 }

@@ -1,11 +1,11 @@
-# BibliotecaDuoc - API REST básica con Spring Boot
+# BibliotecaDuoc - API REST con Spring Boot + JPA + MySQL
 
 Proyecto académico de ejemplo para aprender arquitectura por capas con Spring Boot:
 
 - `controller` (capa web / endpoints REST)
 - `service` (lógica de negocio)
-- `repository` (acceso a datos, en este caso en memoria)
-- `model` (estructura de datos)
+- `repository` (acceso a datos con **JPA / Hibernate**)
+- `model` (entidades JPA / estructura de datos)
 
 ---
 
@@ -13,14 +13,33 @@ Proyecto académico de ejemplo para aprender arquitectura por capas con Spring B
 
 - Java 17
 - Maven (opcional si usas `mvnw`)
+- **MySQL** corriendo en `localhost:3306` (usuario `root`, sin contraseña)
 - IDE recomendado: VS Code / IntelliJ / Eclipse
 - Postman (opcional para probar la API)
 
-> Este proyecto usa **Spring Boot** y **Lombok**.
+> Hibernate crea automáticamente la tabla `libros` al iniciar la aplicación (`ddl-auto=update`). No es necesario crearla manualmente.
 
 ---
 
-## 2) ¿Cómo ejecutar el proyecto?
+## 2) Configuración de base de datos
+
+El archivo `src/main/resources/application.properties` contiene la conexión:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/bibliotecaduoc?createDatabaseIfNotExist=true
+spring.datasource.username=root
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+```
+
+- `createDatabaseIfNotExist=true` → crea la base de datos `bibliotecaduoc` si no existe.
+- `ddl-auto=update` → Hibernate actualiza el esquema automáticamente según la entidad `Libro`.
+- `show-sql=true` → muestra las consultas SQL generadas en la consola.
+
+---
+
+## 3) ¿Cómo ejecutar el proyecto?
 
 ### Opción A: usando Maven Wrapper (recomendado)
 
@@ -49,7 +68,7 @@ java -jar target/bibliotecaduoc-0.0.1-SNAPSHOT.jar
 
 ---
 
-## 3) URL base de la API
+## 4) URL base de la API
 
 Por defecto Spring Boot levanta en puerto `8080`:
 
@@ -65,19 +84,19 @@ Base path del controlador:
 
 ---
 
-## 4) Endpoints disponibles
+## 5) Endpoints disponibles
 
-### 4.1 Listar libros
+### 5.1 Listar libros
 - **Método:** `GET`
 - **URL:** `/api/v1/libros`
-- **Descripción:** retorna todos los libros almacenados en memoria.
+- **Descripción:** retorna todos los libros almacenados en la base de datos.
 
-### 4.2 Buscar libro por ID
+### 5.2 Buscar libro por ID
 - **Método:** `GET`
 - **URL:** `/api/v1/libros/{id}`
 - **Descripción:** retorna un libro por su id.
 
-### 4.3 Crear libro
+### 5.3 Crear libro
 - **Método:** `POST`
 - **URL:** `/api/v1/libros`
 - **Body JSON ejemplo:**
@@ -93,7 +112,7 @@ Base path del controlador:
 }
 ```
 
-### 4.4 Actualizar libro
+### 5.4 Actualizar libro
 - **Método:** `PUT`
 - **URL:** `/api/v1/libros/{id}`
 - **Body JSON ejemplo:**
@@ -109,14 +128,14 @@ Base path del controlador:
 }
 ```
 
-### 4.5 Eliminar libro
+### 5.5 Eliminar libro
 - **Método:** `DELETE`
 - **URL:** `/api/v1/libros/{id}`
 - **Descripción:** elimina un libro por id.
 
 ---
 
-## 5) Estructura del proyecto y explicación por capas
+## 6) Estructura del proyecto y explicación por capas
 
 ```text
 src/main/java/com/example/bibliotecaduoc/
@@ -173,17 +192,29 @@ También usa `@Autowired` para inyectar `LibroRepository`.
 
 En esta carpeta está `LibroRepository`.
 
-Responsabilidades:
-- Simular persistencia de datos (usa `List<Libro>` en memoria).
-- Implementar operaciones CRUD básicas: obtener, buscar, guardar, actualizar y eliminar.
+Ahora es una **interfaz** que extiende `JpaRepository<Libro, Integer>`:
+
+```java
+@Repository
+public interface LibroRepository extends JpaRepository<Libro, Integer> { }
+```
+
+Al extender `JpaRepository`, Spring Data JPA genera automáticamente la implementación con todos los métodos CRUD:
+
+| Método JPA | Descripción |
+|---|---|
+| `findAll()` | Obtiene todos los registros |
+| `findById(id)` | Busca por id, retorna `Optional<Libro>` |
+| `save(libro)` | Inserta o actualiza |
+| `existsById(id)` | Verifica si existe |
+| `deleteById(id)` | Elimina por id |
+
+> Ya no existe la lista en memoria. Los datos se persisten en MySQL y **sobreviven al reinicio** de la aplicación.
 
 Anotación clave:
 
 - `@Repository`
-	- Indica que esta clase pertenece a la capa de acceso a datos.
-	- Spring la registra como bean del contenedor.
-
-> Importante: aquí **no hay base de datos real**. Los datos se pierden al reiniciar la aplicación.
+	- Indica que esta interfaz pertenece a la capa de acceso a datos.
 
 ### 5.4 `model` (entidades / estructura de datos)
 
