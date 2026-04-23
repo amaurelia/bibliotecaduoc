@@ -11,26 +11,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "libros")
-public class Libro {
+@Table(name = "autores")
+public class Autor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @NotBlank
-    private String isbn;
-
-    @NotBlank
-    private String titulo;
-
-    @NotBlank
-    private String editorial;
+    private String nombre;
 
     @NotNull
-    private Integer fechaPublicacion;
+    private Integer edad;
 
-    @OneToOne
-    @JoinColumn(name = "autor_id")
-    private Autor autor;
+    @NotBlank
+    private String nacionalidad;
 }
