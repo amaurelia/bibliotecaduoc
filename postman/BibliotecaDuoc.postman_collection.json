@@ -1,4 +1,4 @@
-{
+﻿{
   "info": {
     "_postman_id": "4f18b0c4-a9ed-4cc7-91c1-9f6ea6e1cf18",
     "name": "BibliotecaDuoc API",
@@ -7,125 +7,170 @@
   },
   "item": [
     {
-      "name": "Listar libros",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/libros",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "libros"
-          ]
+      "name": "Autores",
+      "item": [
+        {
+          "name": "Listar autores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/autores",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "autores"]
+            },
+            "description": "Retorna todos los autores."
+          },
+          "response": []
         },
-        "description": "Retorna todos los libros en memoria."
-      },
-      "response": []
+        {
+          "name": "Buscar autor por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/autores/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "autores", "1"]
+            },
+            "description": "Busca un autor por id."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear autor",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Robert C. Martin\",\n  \"edad\": 73,\n  \"nacionalidad\": \"Estadounidense\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/autores",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "autores"]
+            },
+            "description": "Crea un autor nuevo. Guarda el id que devuelva para usarlo al crear un libro."
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar autor",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Robert C. Martin\",\n  \"edad\": 74,\n  \"nacionalidad\": \"Estadounidense\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/autores/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "autores", "1"]
+            },
+            "description": "Actualiza un autor existente por id."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar autor",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/autores/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "autores", "1"]
+            },
+            "description": "Elimina un autor por id."
+          },
+          "response": []
+        }
+      ]
     },
     {
-      "name": "Buscar libro por ID",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/libros/1",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "libros",
-            "1"
-          ]
+      "name": "Libros",
+      "item": [
+        {
+          "name": "Listar libros",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/libros",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "libros"]
+            },
+            "description": "Retorna todos los libros."
+          },
+          "response": []
         },
-        "description": "Busca un libro por id."
-      },
-      "response": []
-    },
-    {
-      "name": "Crear libro",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"id\": 1,\n  \"isbn\": \"9789561234567\",\n  \"titulo\": \"Clean Code\",\n  \"editorial\": \"Prentice Hall\",\n  \"fechaPublicacion\": 2008,\n  \"autor\": \"Robert C. Martin\"\n}"
+        {
+          "name": "Buscar libro por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/libros/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "libros", "1"]
+            },
+            "description": "Busca un libro por id."
+          },
+          "response": []
         },
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/libros",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "libros"
-          ]
+        {
+          "name": "Crear libro",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isbn\": \"9789561234567\",\n  \"titulo\": \"Clean Code\",\n  \"editorial\": \"Prentice Hall\",\n  \"fechaPublicacion\": 2008,\n  \"autor\": {\n    \"id\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/libros",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "libros"]
+            },
+            "description": "Crea un libro nuevo. El campo autor.id debe corresponder a un autor existente."
+          },
+          "response": []
         },
-        "description": "Crea un libro nuevo."
-      },
-      "response": []
-    },
-    {
-      "name": "Actualizar libro",
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"id\": 1,\n  \"isbn\": \"9789561234567\",\n  \"titulo\": \"Clean Code (Edición actualizada)\",\n  \"editorial\": \"Prentice Hall\",\n  \"fechaPublicacion\": 2009,\n  \"autor\": \"Robert C. Martin\"\n}"
+        {
+          "name": "Actualizar libro",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isbn\": \"9789561234567\",\n  \"titulo\": \"Clean Code (Edicion actualizada)\",\n  \"editorial\": \"Prentice Hall\",\n  \"fechaPublicacion\": 2009,\n  \"autor\": {\n    \"id\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/libros/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "libros", "1"]
+            },
+            "description": "Actualiza un libro existente por id."
+          },
+          "response": []
         },
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/libros/1",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "libros",
-            "1"
-          ]
-        },
-        "description": "Actualiza un libro existente por id."
-      },
-      "response": []
-    },
-    {
-      "name": "Eliminar libro",
-      "request": {
-        "method": "DELETE",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/libros/1",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "libros",
-            "1"
-          ]
-        },
-        "description": "Elimina un libro por id."
-      },
-      "response": []
+        {
+          "name": "Eliminar libro",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/libros/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "libros", "1"]
+            },
+            "description": "Elimina un libro por id."
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "variable": [

@@ -331,7 +331,53 @@ Incluye todos los endpoints:
 
 ---
 
-## 8) Autor
+## 8) JpaRepository: métodos usados en este proyecto
+
+Tanto `LibroRepository` como `AutorRepository` extienden `JpaRepository`:
+
+```java
+public interface LibroRepository extends JpaRepository<Libro, Integer> { }
+public interface AutorRepository extends JpaRepository<Autor, Integer> { }
+```
+
+Al extender `JpaRepository<T, ID>`, Spring Data JPA **genera automáticamente** la implementación de los métodos de acceso a datos. No hace falta escribir ninguna consulta SQL manualmente.
+
+Los parámetros de tipo son:
+- `T` → la entidad (`Libro` o `Autor`)
+- `ID` → el tipo del identificador (`Integer`)
+
+---
+
+### Métodos usados en los servicios de este proyecto
+
+| Método | Dónde se usa | Qué hace |
+|--------|-------------|----------|
+| `findAll()` | `getLibros()`, `getAutores()` | Ejecuta `SELECT * FROM libros` (o `autores`) y retorna una `List<T>` con todos los registros. |
+| `save(entity)` | `saveLibro()`, `saveAutor()`, `updateLibro()`, `updateAutor()` | Si la entidad **no tiene id** (o el id no existe en BD) hace un `INSERT`. Si el id ya existe, hace un `UPDATE`. Retorna la entidad guardada (con el id asignado por la BD en caso de inserción). |
+| `findById(id)` | `getLibroId()`, `getAutorId()` | Ejecuta `SELECT ... WHERE id = ?` y retorna un `Optional<T>`. Se usa `.orElse(null)` para obtener el objeto o `null` si no existe. |
+| `existsById(id)` | `updateLibro()`, `updateAutor()` | Ejecuta un `SELECT COUNT(*)` para verificar si existe un registro con ese id. Retorna `boolean`. Se usa para evitar hacer un `save` sobre un id inexistente (lo que crearía un registro nuevo en lugar de actualizar). |
+| `deleteById(id)` | `deleteLibro()`, `deleteAutor()` | Ejecuta `DELETE FROM ... WHERE id = ?`. Si el id no existe, lanza `EmptyResultDataAccessException`. |
+
+---
+
+### Ejemplo: flujo completo de `updateLibro`
+
+```java
+public Libro updateLibro(Libro libro) {
+    if (!libroRepository.existsById(libro.getId())) {  // ← existsById
+        return null;                                    //   si no existe, retorna null (404)
+    }
+    return libroRepository.save(libro);                // ← save hace UPDATE porque el id ya existe
+}
+```
+
+### ¿Por qué no hay SQL en el repositorio?
+
+Spring Data JPA utiliza **Hibernate** como proveedor de JPA. Hibernate traduce las llamadas a los métodos del repositorio a consultas SQL reales, que se pueden ver en la consola gracias al parámetro `show-sql=true` del `application.properties`.
+
+---
+
+## 9) Autor
 
 - **Alvaro Maurelia**
 - **Correo:** al.maurelia@profesor.duoc.cl
