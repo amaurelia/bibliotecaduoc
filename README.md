@@ -1,4 +1,4 @@
-# BibliotecaDuoc - API REST con Spring Boot + JPA + MySQL
+# BibliotecaDuoc - API REST con Spring Boot + JPA + Flyway + MySQL
 
 Proyecto académico de ejemplo para aprender arquitectura por capas con Spring Boot:
 
@@ -6,6 +6,7 @@ Proyecto académico de ejemplo para aprender arquitectura por capas con Spring B
 - `service` (lógica de negocio)
 - `repository` (acceso a datos con **JPA / Hibernate**)
 - `model` (entidades JPA / estructura de datos)
+- `db/migration` (scripts SQL versionados gestionados por **Flyway**)
 
 ---
 
@@ -17,7 +18,7 @@ Proyecto académico de ejemplo para aprender arquitectura por capas con Spring B
 - IDE recomendado: VS Code / IntelliJ / Eclipse
 - Postman (opcional para probar la API)
 
-> Hibernate crea automáticamente la tabla `libros` al iniciar la aplicación (`ddl-auto=update`). No es necesario crearla manualmente.
+> **Flyway** gestiona el esquema de la base de datos mediante scripts SQL versionados ubicados en `src/main/resources/db/migration/`. Al iniciar la aplicación, Flyway ejecuta automáticamente los scripts pendientes en orden. No es necesario crear las tablas manualmente.
 
 ---
 
@@ -29,13 +30,28 @@ El archivo `src/main/resources/application.properties` contiene la conexión:
 spring.datasource.url=jdbc:mysql://localhost:3306/bibliotecaduoc?createDatabaseIfNotExist=true
 spring.datasource.username=root
 spring.datasource.password=
-spring.jpa.hibernate.ddl-auto=update
+spring.jpa.hibernate.ddl-auto=none
 spring.jpa.show-sql=true
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
 ```
 
 - `createDatabaseIfNotExist=true` → crea la base de datos `bibliotecaduoc` si no existe.
-- `ddl-auto=update` → Hibernate actualiza el esquema automáticamente según la entidad `Libro`.
+- `ddl-auto=none` → Hibernate **no** modifica el esquema; Flyway es el responsable.
 - `show-sql=true` → muestra las consultas SQL generadas en la consola.
+- `flyway.enabled=true` → activa Flyway al arrancar la aplicación.
+- `flyway.locations` → carpeta donde Flyway busca los scripts de migración.
+
+### Scripts de migración Flyway
+
+Los scripts están en `src/main/resources/db/migration/` con el formato `V{version}__{descripcion}.sql`:
+
+| Script | Descripción |
+|---|---|
+| `V1__crear_tabla_autores.sql` | Crea la tabla `autores` |
+| `V2__crear_tabla_libros.sql` | Crea la tabla `libros` con FK hacia `autores` |
+
+Flyway registra cada script ejecutado en la tabla interna `flyway_schema_history`. Los scripts ya aplicados nunca se vuelven a ejecutar.
 
 ---
 
