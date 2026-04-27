@@ -1,5 +1,6 @@
 package com.example.bibliotecaduoc.service;
 
+import com.example.bibliotecaduoc.dto.LibroNacionalidadDTO;
 import com.example.bibliotecaduoc.model.Libro;
 import com.example.bibliotecaduoc.repository.LibroRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,5 +35,14 @@ public class LibroService {
 
     public void deleteLibro(int id) {
         libroRepository.deleteById(id);
+    }
+
+    public List<LibroNacionalidadDTO> getLibrosConNacionalidad() {
+        return libroRepository.findAll().stream()
+                .map(l -> new LibroNacionalidadDTO(
+                        l.getTitulo(),
+                        l.getAutor().getNacionalidad()
+                ))
+                .toList();
     }
 }

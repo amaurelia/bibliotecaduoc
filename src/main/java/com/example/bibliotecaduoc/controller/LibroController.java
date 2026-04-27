@@ -1,5 +1,6 @@
 package com.example.bibliotecaduoc.controller;
 
+import com.example.bibliotecaduoc.dto.LibroNacionalidadDTO;
 import com.example.bibliotecaduoc.model.Libro;
 import com.example.bibliotecaduoc.service.LibroService;
 import jakarta.validation.Valid;
@@ -50,6 +51,11 @@ public class LibroController {
     public ResponseEntity<Void> eliminarLibro(@PathVariable int id) {
         libroService.deleteLibro(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/con-nacionalidad")
+    public ResponseEntity<List<LibroNacionalidadDTO>> librosPorNacionalidad() {
+        return ResponseEntity.ok(libroService.getLibrosConNacionalidad());
     }
 }
 

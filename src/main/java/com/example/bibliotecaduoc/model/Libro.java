@@ -30,7 +30,8 @@ public class Libro {
     @NotNull
     private Integer fechaPublicacion;
 
-    @OneToOne
-    @JoinColumn(name = "autor_id")
+    @NotNull
+    @OneToOne(optional = false)
+    @JoinColumn(name = "autor_id", nullable = false)
     private Autor autor;
 }

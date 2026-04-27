@@ -169,6 +169,20 @@
             "description": "Elimina un libro por id."
           },
           "response": []
+        },
+        {
+          "name": "Libros con nacionalidad del autor (DTO)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/libros/con-nacionalidad",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "libros", "con-nacionalidad"]
+            },
+            "description": "Retorna una lista proyectada con solo el título del libro y la nacionalidad de su autor (LibroNacionalidadDTO). Ejemplo de respuesta:\n[\n  { \"titulo\": \"Cien años de soledad\", \"nacionalidadAutor\": \"Colombiana\" },\n  { \"titulo\": \"La casa de los espíritus\", \"nacionalidadAutor\": \"Chilena\" }\n]"
+          },
+          "response": []
         }
       ]
     }

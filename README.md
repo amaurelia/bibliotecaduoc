@@ -133,6 +133,48 @@ Base path del controlador:
 - **URL:** `/api/v1/libros/{id}`
 - **Descripción:** elimina un libro por id.
 
+### 5.6 Listar libros con nacionalidad del autor
+- **Método:** `GET`
+- **URL:** `/api/v1/libros/con-nacionalidad`
+- **Descripción:** retorna todos los libros junto con la nacionalidad de su autor, usando un DTO proyectado (sin exponer la entidad completa).
+- **Respuesta JSON ejemplo:**
+
+```json
+[
+  { "titulo": "Cien años de soledad", "nacionalidadAutor": "Colombiana" },
+  { "titulo": "La casa de los espíritus", "nacionalidadAutor": "Chilena" }
+]
+```
+
+#### ¿Cómo funciona el DTO internamente?
+
+La clase `LibroNacionalidadDTO` es un objeto simple (POJO) con solo los campos que queremos exponer.
+En el servicio se usa un **stream** para transformar la lista de entidades `Libro` en una lista de DTOs:
+
+```java
+libroRepository.findAll().stream()
+    .filter(l -> l.getAutor() != null)  // evita NullPointerException si el libro no tiene autor
+    .map(l -> new LibroNacionalidadDTO(
+            l.getTitulo(),
+            l.getAutor().getNacionalidad()
+    ))
+    .toList();  // equivalente a .collect(Collectors.toList()) en Java 16+
+```
+
+| Paso | ¿Es obligatorio? | Descripción |
+|---|---|---|
+| `.stream()` | Sí, en este enfoque | Convierte la lista en un flujo procesable |
+| `.filter(...)` | Sí | Descarta libros sin autor para evitar `NullPointerException` |
+| `.map(...)` | Sí | Transforma cada `Libro` en un `LibroNacionalidadDTO` |
+| `.toList()` | Sí | Materializa el stream en una `List` |
+
+> **Alternativa sin streams:** se puede definir la query directamente en el repositorio con JPQL
+> y un constructor, evitando cargar las entidades completas en memoria:
+> ```java
+> @Query("SELECT new com.example.bibliotecaduoc.dto.LibroNacionalidadDTO(l.titulo, l.autor.nacionalidad) FROM Libro l WHERE l.autor IS NOT NULL")
+> List<LibroNacionalidadDTO> findLibrosConNacionalidad();
+> ```
+
 ---
 
 ## 6) Estructura del proyecto y explicación por capas
@@ -140,6 +182,7 @@ Base path del controlador:
 ```text
 src/main/java/com/example/bibliotecaduoc/
 ├── controller/
+├── dto/
 ├── service/
 ├── repository/
 └── model/
