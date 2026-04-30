@@ -420,7 +420,110 @@ Spring Data JPA utiliza **Hibernate** como proveedor de JPA. Hibernate traduce l
 
 ---
 
-## 9) Autor
+## 9) ResponseEntity: manejo de respuestas HTTP
+
+### ¿Qué es `ResponseEntity`?
+
+`ResponseEntity` es una clase de Spring que representa **una respuesta HTTP completa**: código de estado, cabeceras y cuerpo.
+
+Al usarla en los controladores, el servidor le comunica al cliente no solo los datos, sino también el resultado de la operación a través del código HTTP. Esto es fundamental en una API REST bien diseñada.
+
+```java
+// Sin ResponseEntity → Spring asume siempre HTTP 200, sin control
+public List<Autor> listarAutores() { ... }
+
+// Con ResponseEntity → control total sobre la respuesta
+public ResponseEntity<?> listarAutores() { ... }
+```
+
+El tipo genérico `<?>` (wildcard) se usa cuando el método puede devolver distintos tipos según el resultado: por ejemplo, un objeto `Autor` en el caso exitoso y un `String` con el mensaje de error en el caso fallido.
+
+---
+
+### Variantes usadas en este proyecto
+
+#### `ResponseEntity.ok(cuerpo)` → HTTP 200 OK
+
+```java
+return ResponseEntity.ok(actualizado);
+```
+
+- **Cuándo se usa:** cuando la operación fue exitosa y se devuelve un dato al cliente.
+- **Casos típicos:** listar todos los registros, buscar por id (cuando existe), actualizar (cuando existe).
+- **Respuesta:** HTTP 200 + el objeto en formato JSON.
+
+---
+
+#### `ResponseEntity.status(HttpStatus.CREATED).body(cuerpo)` → HTTP 201 Created
+
+```java
+return ResponseEntity.status(HttpStatus.CREATED).body(autorService.saveAutor(autor));
+```
+
+- **Cuándo se usa:** cuando se crea un nuevo recurso exitosamente.
+- **Casos típicos:** endpoint `POST` que inserta un nuevo registro en la base de datos.
+- **Respuesta:** HTTP 201 + el objeto recién creado en formato JSON.
+- **¿Por qué no usar 200?** El estándar HTTP reserva el 201 específicamente para creaciones, lo que hace la API más expresiva y correcta semánticamente.
+
+---
+
+#### `ResponseEntity.notFound().build()` → HTTP 404 Not Found
+
+```java
+if (autor == null) {
+    return ResponseEntity.notFound().build();
+}
+```
+
+- **Cuándo se usa:** cuando el recurso solicitado no existe en la base de datos.
+- **Casos típicos:** buscar o actualizar por un id que no existe.
+- **Respuesta:** HTTP 404, sin cuerpo (`.build()` indica que no hay body).
+- **¿Qué significa `.build()`?** Construye la respuesta sin agregar ningún cuerpo. Se usa cuando no hay datos que devolver.
+
+---
+
+#### `ResponseEntity.noContent().build()` → HTTP 204 No Content
+
+```java
+autorService.deleteAutor(id);
+return ResponseEntity.noContent().build();
+```
+
+- **Cuándo se usa:** cuando la operación fue exitosa pero no hay nada que devolver.
+- **Casos típicos:** endpoint `DELETE` que elimina un registro correctamente.
+- **Respuesta:** HTTP 204, sin cuerpo.
+- **¿Por qué no usar 200?** Al eliminar, no hay objeto que retornar. El 204 indica éxito sin contenido.
+
+---
+
+#### `ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensaje)` → HTTP 500 Internal Server Error
+
+```java
+} catch (Exception e) {
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al agregar autor: " + e.getMessage());
+}
+```
+
+- **Cuándo se usa:** cuando ocurre un error inesperado en el servidor al procesar la solicitud.
+- **Casos típicos:** falla de conexión a la base de datos, error de constraint, excepción no controlada.
+- **Respuesta:** HTTP 500 + mensaje descriptivo del error como texto.
+- **¿Por qué capturar `Exception`?** Captura cualquier excepción que pueda lanzar la capa de servicio o repositorio, evitando que el servidor devuelva un error genérico sin información.
+
+---
+
+### Tabla resumen
+
+| Método | Código HTTP | Cuándo usarlo |
+|--------|-------------|---------------|
+| `ResponseEntity.ok(body)` | **200 OK** | Operación exitosa con datos que devolver |
+| `ResponseEntity.status(CREATED).body(body)` | **201 Created** | Recurso creado exitosamente (POST) |
+| `ResponseEntity.notFound().build()` | **404 Not Found** | El recurso solicitado no existe |
+| `ResponseEntity.noContent().build()` | **204 No Content** | Operación exitosa sin datos que devolver (DELETE) |
+| `ResponseEntity.status(INTERNAL_SERVER_ERROR).body(msg)` | **500 Internal Server Error** | Error inesperado en el servidor |
+
+---
+
+## 10) Autor
 
 - **Alvaro Maurelia**
 - **Correo:** al.maurelia@profesor.duoc.cl
