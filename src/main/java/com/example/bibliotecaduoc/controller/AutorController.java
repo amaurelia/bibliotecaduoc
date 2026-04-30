@@ -18,57 +18,37 @@ public class AutorController {
     private AutorService autorService;
 
     @GetMapping
-    public ResponseEntity<?> listarAutores() {
-        try {
-            return ResponseEntity.ok(autorService.getAutores());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al obtener autores: " + e.getMessage());
-        }
+    public ResponseEntity<List<Autor>> listarAutores() {
+        return ResponseEntity.ok(autorService.getAutores());
     }
 
     @PostMapping
-    public ResponseEntity<?> agregarAutor(@Valid @RequestBody Autor autor) {
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(autorService.saveAutor(autor));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al agregar autor: " + e.getMessage());
-        }
+    public ResponseEntity<Autor> agregarAutor(@Valid @RequestBody Autor autor) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(autorService.saveAutor(autor));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarAutor(@PathVariable int id) {
-        try {
-            Autor autor = autorService.getAutorId(id);
-            if (autor == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(autor);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al buscar autor: " + e.getMessage());
+    public ResponseEntity<Autor> buscarAutor(@PathVariable int id) {
+        Autor autor = autorService.getAutorId(id);
+        if (autor == null) {
+            return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.ok(autor);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarAutor(@PathVariable int id, @Valid @RequestBody Autor autor) {
-        try {
-            autor.setId(id);
-            Autor actualizado = autorService.updateAutor(autor);
-            if (actualizado == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(actualizado);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar autor: " + e.getMessage());
+    public ResponseEntity<Autor> actualizarAutor(@PathVariable int id, @Valid @RequestBody Autor autor) {
+        autor.setId(id);
+        Autor actualizado = autorService.updateAutor(autor);
+        if (actualizado == null) {
+            return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.ok(actualizado);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarAutor(@PathVariable int id) {
-        try {
-            autorService.deleteAutor(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al eliminar autor: " + e.getMessage());
-        }
+    public ResponseEntity<Void> eliminarAutor(@PathVariable int id) {
+        autorService.deleteAutor(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -420,7 +420,134 @@ Spring Data JPA utiliza **Hibernate** como proveedor de JPA. Hibernate traduce l
 
 ---
 
-## 9) ResponseEntity: manejo de respuestas HTTP
+## 9) Manejador global de errores (`@ControllerAdvice`)
+
+### ¿Qué es?
+
+`@ControllerAdvice` es una anotación de Spring que permite crear una **clase centralizada** que intercepta las excepciones lanzadas por cualquier controlador de la aplicación.
+
+En lugar de poner `try-catch` en cada endpoint (código repetitivo y difícil de mantener), defines el manejo de errores **una sola vez** y Spring lo aplica automáticamente a todos los controladores.
+
+---
+
+### Paso a paso: cómo funciona
+
+#### Paso 1 — Crear la clase de error (`ApiError`)
+
+Primero se define un modelo simple que representa la estructura del JSON de error que recibirá el cliente:
+
+```java
+// exception/ApiError.java
+public class ApiError {
+    private int codigo;      // código HTTP numérico (400, 500...)
+    private String mensaje;  // descripción corta del error
+    private String detalle;  // información técnica / campo con problema
+}
+```
+
+Cuando algo falla, la API devuelve este JSON en lugar de un mensaje de texto plano:
+```json
+{
+  "codigo": 400,
+  "mensaje": "Error de validación",
+  "detalle": "nombre: no debe estar vacío, edad: no debe ser nulo"
+}
+```
+
+#### Paso 2 — Crear el manejador global (`GlobalExceptionHandler`)
+
+```java
+// exception/GlobalExceptionHandler.java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    // Se activa cuando @Valid falla → 400 Bad Request
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> handleValidationErrors(MethodArgumentNotValidException ex) {
+        String detalle = ex.getBindingResult().getFieldErrors().stream()
+                .map(f -> f.getField() + ": " + f.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+        return ResponseEntity.badRequest()
+                .body(new ApiError(400, "Error de validación", detalle));
+    }
+
+    // Se activa ante cualquier excepción no esperada → 500 Internal Server Error
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleGenericError(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiError(500, "Error interno del servidor", ex.getMessage()));
+    }
+}
+```
+
+#### Paso 3 — Limpiar los controladores
+
+Con el manejador global activo, los controladores ya **no necesitan `try-catch`**. Spring intercepta las excepciones automáticamente antes de que lleguen al cliente:
+
+```java
+// ANTES (con try-catch en cada método)
+public ResponseEntity<?> agregarAutor(@Valid @RequestBody Autor autor) {
+    try {
+        return ResponseEntity.status(HttpStatus.CREATED).body(autorService.saveAutor(autor));
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+    }
+}
+
+// DESPUÉS (limpio, sin try-catch)
+public ResponseEntity<Autor> agregarAutor(@Valid @RequestBody Autor autor) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(autorService.saveAutor(autor));
+}
+```
+
+---
+
+### Flujo completo
+
+```
+Cliente envía request
+       ↓
+Controlador ejecuta el método
+       ↓
+   ¿Ocurre una excepción?
+      ↙            ↘
+    NO              SÍ
+     ↓               ↓
+Responde normal   Spring la intercepta
+(200, 201, etc.)  y la envía al GlobalExceptionHandler
+                       ↓
+              ¿Qué tipo de excepción es?
+              ↙                        ↘
+  MethodArgumentNotValidException    Exception (cualquier otra)
+  (fallo de @Valid)                  (error de BD, null, etc.)
+       ↓                                    ↓
+  400 Bad Request + ApiError          500 Internal Server Error + ApiError
+```
+
+---
+
+### Estructura de archivos agregada
+
+```text
+src/main/java/com/example/bibliotecaduoc/
+└── exception/
+    ├── ApiError.java              ← modelo de respuesta de error
+    └── GlobalExceptionHandler.java ← manejador central con @RestControllerAdvice
+```
+
+---
+
+### Anotaciones clave
+
+| Anotación | Descripción |
+|---|---|
+| `@RestControllerAdvice` | Marca la clase como manejadora global de excepciones para controladores REST |
+| `@ExceptionHandler(X.class)` | Indica qué método se ejecuta cuando ocurre una excepción de tipo `X` |
+| `MethodArgumentNotValidException` | Excepción que lanza Spring cuando `@Valid` detecta un campo inválido |
+
+---
+
+## 10) ResponseEntity: manejo de respuestas HTTP
 
 ### ¿Qué es `ResponseEntity`?
 
@@ -523,7 +650,7 @@ return ResponseEntity.noContent().build();
 
 ---
 
-## 10) Autor
+## 11) Autor
 
 - **Alvaro Maurelia**
 - **Correo:** al.maurelia@profesor.duoc.cl

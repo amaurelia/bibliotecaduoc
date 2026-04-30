@@ -28,6 +28,7 @@ public class LibroController {
         return ResponseEntity.status(HttpStatus.CREATED).body(libroService.saveLibro(libro));
     }
 
+
     @GetMapping("/{id}")
     public ResponseEntity<Libro> buscarLibro(@PathVariable int id) {
         Libro libro = libroService.getLibroId(id);
@@ -56,6 +57,12 @@ public class LibroController {
     @GetMapping("/con-nacionalidad")
     public ResponseEntity<List<LibroNacionalidadDTO>> librosPorNacionalidad() {
         return ResponseEntity.ok(libroService.getLibrosConNacionalidad());
+    }
+
+    // Endpoint de prueba: lanza una excepción a propósito para demostrar el GlobalExceptionHandler
+    @GetMapping("/test-error")
+    public ResponseEntity<Libro> testError() {
+        throw new RuntimeException("Este es un error de prueba lanzado intencionalmente");
     }
 }
 
