@@ -20,17 +20,20 @@ public class LibroController {
 
     @GetMapping
     public ResponseEntity<List<Libro>> listarLibros() {
+        System.out.println("[LibroController] -> listarLibros");
         return ResponseEntity.ok(libroService.getLibros());
     }
 
     @PostMapping
     public ResponseEntity<Libro> agregarLibro(@Valid @RequestBody Libro libro) {
+        System.out.println("[LibroController] -> agregarLibro");
         return ResponseEntity.status(HttpStatus.CREATED).body(libroService.saveLibro(libro));
     }
 
 
     @GetMapping("/{id}")
     public ResponseEntity<Libro> buscarLibro(@PathVariable int id) {
+        System.out.println("[LibroController] -> buscarLibro id=" + id);
         Libro libro = libroService.getLibroId(id);
         if (libro == null) {
             return ResponseEntity.notFound().build();
@@ -40,6 +43,7 @@ public class LibroController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Libro> actualizarLibro(@PathVariable int id, @Valid @RequestBody Libro libro) {
+        System.out.println("[LibroController] -> actualizarLibro id=" + id);
         libro.setId(id);
         Libro actualizado = libroService.updateLibro(libro);
         if (actualizado == null) {
@@ -50,18 +54,21 @@ public class LibroController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarLibro(@PathVariable int id) {
+        System.out.println("[LibroController] -> eliminarLibro id=" + id);
         libroService.deleteLibro(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/con-nacionalidad")
     public ResponseEntity<List<LibroNacionalidadDTO>> librosPorNacionalidad() {
+        System.out.println("[LibroController] -> librosPorNacionalidad");
         return ResponseEntity.ok(libroService.getLibrosConNacionalidad());
     }
 
     // Endpoint de prueba: lanza una excepción a propósito para demostrar el GlobalExceptionHandler
     @GetMapping("/test-error")
     public ResponseEntity<Libro> testError() {
+        System.out.println("[LibroController] -> testError");
         throw new RuntimeException("Este es un error de prueba lanzado intencionalmente");
     }
 }

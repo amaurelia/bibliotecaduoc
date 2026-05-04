@@ -29,6 +29,7 @@ public class WeatherController {
             @RequestParam(defaultValue = "-33.45") double lat,
             @RequestParam(defaultValue = "-70.65") double lon) {
 
+        System.out.println("[WeatherController] -> clima lat=" + lat + ", lon=" + lon);
         WeatherDTO resultado = weatherService.obtenerClima(lat, lon);
         return ResponseEntity.ok(resultado);
     }
