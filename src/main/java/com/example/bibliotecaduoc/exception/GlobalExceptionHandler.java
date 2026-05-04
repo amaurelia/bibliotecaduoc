@@ -6,6 +6,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -33,5 +34,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleGenericError(Exception ex) {
         ApiError error = new ApiError(500, "Error interno del servidor", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    // Maneja errores de la API externa (Open Library) → 404 o 502
+    @ExceptionHandler(WebClientResponseException.class)
+    public ResponseEntity<ApiError> handleWebClientError(WebClientResponseException ex) {
+        if (ex.getStatusCode().value() == 404) {
+            ApiError error = new ApiError(404, "ISBN no encontrado en Open Library", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+        ApiError error = new ApiError(502, "Error al consultar Open Library", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
     }
 }

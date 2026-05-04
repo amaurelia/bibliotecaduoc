@@ -650,7 +650,190 @@ return ResponseEntity.noContent().build();
 
 ---
 
-## 11) Autor
+## 11) WebClient y consumo de APIs externas
+
+### ¿Qué es WebClient?
+
+`WebClient` es el cliente HTTP reactivo de Spring (parte de **Spring WebFlux**). A diferencia del antiguo `RestTemplate`, está diseñado para llamadas HTTP modernas y soporta tanto el modo reactivo (asíncrono) como el bloqueante (síncrono). En este proyecto se usa en modo **bloqueante** con `.block()` para conservar la arquitectura simple del resto del código.
+
+### ¿Por qué WebClient y no RestTemplate?
+
+| | `RestTemplate` | `WebClient` |
+|---|---|---|
+| Estado | Obsoleto (deprecated desde Spring 5) | Recomendado actualmente |
+| Estilo | Solo síncrono/bloqueante | Reactivo y bloqueante |
+| Configuración | Por instancia directa | Por `@Bean` reutilizable |
+
+---
+
+### ¿Cómo se configura? — `WebClientConfig`
+
+La clase `WebClientConfig` vive en el paquete `config` y usa la anotación `@Configuration`, lo que le indica a Spring que contiene definiciones de **beans** (objetos gestionados por el contenedor de Spring).
+
+```java
+@Configuration
+public class WebClientConfig {
+
+    @Value("${openmeteo.base-url}")
+    private String openMeteoBaseUrl;
+
+    @Bean
+    public WebClient weatherWebClient() {
+        return WebClient.builder()
+                .baseUrl(openMeteoBaseUrl)
+                .defaultHeader("Accept", "application/json")
+                .build();
+    }
+}
+```
+
+| Elemento | Descripción |
+|---|---|
+| `@Configuration` | Indica que la clase declara beans de Spring |
+| `@Value("${openmeteo.base-url}")` | Lee la URL base desde `application.properties`, evitando escribirla directamente en el código |
+| `@Bean` | Le dice a Spring que el método produce un bean gestionado. Puede inyectarse con `@Autowired` en cualquier servicio |
+| `.baseUrl(...)` | URL raíz que se antepone automáticamente a cada llamada |
+| `.defaultHeader(...)` | Cabecera incluida en todas las peticiones del cliente |
+
+La URL base se define en `application.properties`:
+
+```properties
+# Open-Meteo API (clima, sin API key)
+openmeteo.base-url=https://api.open-meteo.com
+```
+
+---
+
+### ¿Cómo se usa? — `WeatherService`
+
+El servicio inyecta el bean mediante `@Autowired` + `@Qualifier` (necesario porque podría haber varios `WebClient` beans registrados):
+
+```java
+@Service
+public class WeatherService {
+
+    @Autowired
+    @Qualifier("weatherWebClient")
+    private WebClient weatherWebClient;
+
+    public WeatherDTO obtenerClima(double latitude, double longitude) {
+        return weatherWebClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1/forecast")
+                        .queryParam("latitude", latitude)
+                        .queryParam("longitude", longitude)
+                        .queryParam("current_weather", true)
+                        .build())
+                .retrieve()
+                .bodyToMono(WeatherDTO.class)
+                .block();
+    }
+}
+```
+
+| Paso | Descripción |
+|---|---|
+| `.get()` | Define el método HTTP (GET) |
+| `.uri(...)` | Construye la URL final, usando un `UriBuilder` para agregar query params de forma segura |
+| `.retrieve()` | Ejecuta la petición y prepara la lectura de la respuesta |
+| `.bodyToMono(WeatherDTO.class)` | Deserializa el JSON de respuesta al DTO indicado |
+| `.block()` | Bloquea el hilo hasta recibir la respuesta (modo síncrono) |
+
+La URL real que WebClient construye y llama internamente para Santiago de Chile es:
+
+```
+https://api.open-meteo.com/v1/forecast?latitude=-33.45&longitude=-70.65&current_weather=true
+```
+
+> Puedes pegar esa URL directamente en el navegador para ver la respuesta JSON cruda de Open-Meteo, **sin pasar por tu aplicación**. Lo que hace WebClient es exactamente eso, pero desde dentro del servidor Java y mapeando el resultado al `WeatherDTO`.
+
+---
+
+### Endpoint del clima — `WeatherController`
+
+```
+GET /api/v1/clima
+```
+
+- **Parámetros opcionales:**
+
+| Parámetro | Tipo | Default | Descripción |
+|---|---|---|---|
+| `lat` | `double` | `-33.45` | Latitud |
+| `lon` | `double` | `-70.65` | Longitud |
+
+- **Ejemplos:**
+
+```
+GET /api/v1/clima                          → clima actual de Santiago de Chile
+GET /api/v1/clima?lat=-41.47&lon=-72.94   → clima actual de Puerto Montt
+```
+
+- **Respuesta exitosa (200):**
+
+```json
+{
+  "latitude": -33.45,
+  "longitude": -70.65,
+  "current_weather": {
+    "temperature": 14.5,
+    "windspeed": 22.3,
+    "winddirection": 180,
+    "weathercode": 3,
+    "is_day": 1,
+    "time": "2024-01-15T12:00"
+  }
+}
+```
+
+| Campo | Descripción |
+|---|---|
+| `temperature` | Temperatura actual en °C |
+| `windspeed` | Velocidad del viento en km/h |
+| `winddirection` | Dirección del viento en grados (0–360) |
+| `weathercode` | Código WMO del estado del tiempo (0 = despejado, 3 = nublado, etc.) |
+| `is_day` | `1` si es de día, `0` si es de noche |
+| `time` | Hora de la medición |
+
+---
+
+### Flujo completo de una llamada al clima
+
+```
+Cliente
+  │
+  │  GET /api/v1/clima?lat=-33.45&lon=-70.65
+  ▼
+WeatherController
+  │  weatherService.obtenerClima(-33.45, -70.65)
+  ▼
+WeatherService
+  │  weatherWebClient.get().uri(...).retrieve().bodyToMono(WeatherDTO.class).block()
+  ▼
+Open-Meteo API (https://api.open-meteo.com)
+  │  200 OK + JSON con datos del clima
+  ▼
+WeatherService
+  │  deserializa JSON → WeatherDTO
+  ▼
+WeatherController
+  │  ResponseEntity.ok(weatherDTO)
+  ▼
+Cliente
+     200 OK + JSON
+```
+
+---
+
+### API externa utilizada: Open-Meteo
+
+- **URL base:** `https://api.open-meteo.com`
+- **Gratuita:** sí, sin necesidad de API Key
+- **Documentación:** [open-meteo.com](https://open-meteo.com)
+
+---
+
+## 12) Autor
 
 - **Alvaro Maurelia**
 - **Correo:** al.maurelia@profesor.duoc.cl

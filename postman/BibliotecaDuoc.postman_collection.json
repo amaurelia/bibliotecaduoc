@@ -127,7 +127,7 @@
             "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"isbn\": \"9789561234567\",\n  \"titulo\": \"Clean Code\",\n  \"editorial\": \"Prentice Hall\",\n  \"fechaPublicacion\": 2008,\n  \"autor\": {\n    \"id\": 1\n  }\n}"
+              "raw": "{\n  \"isbn\": \"9780132350884\",\n  \"titulo\": \"Clean Code\",\n  \"editorial\": \"Prentice Hall\",\n  \"fechaPublicacion\": 2008,\n  \"autor\": {\n    \"id\": 1\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/libros",
@@ -145,7 +145,7 @@
             "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"isbn\": \"9789561234567\",\n  \"titulo\": \"Clean Code (Edicion actualizada)\",\n  \"editorial\": \"Prentice Hall\",\n  \"fechaPublicacion\": 2009,\n  \"autor\": {\n    \"id\": 1\n  }\n}"
+              "raw": "{\n  \"isbn\": \"9780132350884\",\n  \"titulo\": \"Clean Code (Edicion actualizada)\",\n  \"editorial\": \"Prentice Hall\",\n  \"fechaPublicacion\": 2009,\n  \"autor\": {\n    \"id\": 1\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/libros/1",
@@ -195,6 +195,51 @@
               "path": ["api", "v1", "libros", "test-error"]
             },
             "description": "Endpoint de prueba que lanza una RuntimeException a propósito. Demuestra cómo el GlobalExceptionHandler intercepta el error y devuelve un JSON estructurado con código 500:\n{\n  \"codigo\": 500,\n  \"mensaje\": \"Error interno del servidor\",\n  \"detalle\": \"Este es un error de prueba lanzado intencionalmente\"\n}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Clima (Open-Meteo)",
+      "item": [
+        {
+          "name": "Clima actual - Santiago (default)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clima",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clima"]
+            },
+            "description": "Devuelve el clima actual de Santiago de Chile usando la API Open-Meteo (lat=-33.45, lon=-70.65).\n\nEjemplo de respuesta:\n{\n  \"latitude\": -33.45,\n  \"longitude\": -70.65,\n  \"current_weather\": {\n    \"temperature\": 14.5,\n    \"windspeed\": 22.3,\n    \"winddirection\": 180,\n    \"weathercode\": 3,\n    \"is_day\": 1,\n    \"time\": \"2024-01-15T12:00\"\n  }\n}"
+          },
+          "response": []
+        },
+        {
+          "name": "Clima actual - coordenadas personalizadas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clima?lat=-41.47&lon=-72.94",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clima"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "-41.47",
+                  "description": "Latitud (ej: -41.47 para Puerto Montt)"
+                },
+                {
+                  "key": "lon",
+                  "value": "-72.94",
+                  "description": "Longitud (ej: -72.94 para Puerto Montt)"
+                }
+              ]
+            },
+            "description": "Devuelve el clima actual para coordenadas personalizadas. Este ejemplo usa Puerto Montt. Puedes cambiar lat y lon por cualquier ciudad del mundo."
           },
           "response": []
         }
