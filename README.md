@@ -833,7 +833,272 @@ Cliente
 
 ---
 
-## 12) Autor
+## 12) Spring Security y autenticación JWT
+
+### ¿Qué es Spring Security?
+
+**Spring Security** es el framework de seguridad estándar del ecosistema Spring. Se integra como una cadena de **filtros HTTP** que intercepta cada request antes de que llegue a los controladores, de manera completamente transparente para el código de negocio existente.
+
+Sus dos responsabilidades principales son:
+
+| Concepto | Definición | Ejemplo en este proyecto |
+|---|---|---|
+| **Autenticación** | Verificar *quién eres* | El usuario hace `POST /api/v1/auth/login` con su usuario y contraseña |
+| **Autorización** | Verificar *qué puedes hacer* | Un `USER` solo puede leer libros; un `ADMIN` puede crear, editar y eliminar |
+
+---
+
+### Estrategia elegida: JWT (JSON Web Token)
+
+Una API REST es **stateless** (sin estado), lo que significa que el servidor no guarda sesiones entre requests. Por eso se usa JWT en lugar de cookies de sesión:
+
+1. El usuario hace login → el servidor genera y firma un **token JWT**.
+2. El cliente guarda ese token y lo envía en el **header `Authorization`** de cada request posterior.
+3. El servidor verifica la firma del token en cada request, sin necesidad de consultar la base de datos.
+
+#### ¿Qué es un JWT?
+
+Un token JWT tiene tres partes separadas por puntos:
+
+```
+eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOi...  .xYz_firma
+   ^ Header                  ^ Payload (claims)                ^ Signature
+```
+
+| Parte | Contenido |
+|---|---|
+| **Header** | Algoritmo de firma (`HS256`) |
+| **Payload** | `sub` (username), `role`, `iat` (emitido), `exp` (vencimiento) |
+| **Signature** | HMAC-SHA256 del header+payload firmado con la clave secreta del servidor |
+
+El token **no está encriptado** (Base64URL), pero sí está **firmado**: cualquier modificación invalida la firma.
+
+---
+
+### Roles implementados
+
+| Rol | Permisos |
+|---|---|
+| `ROLE_USER` | `GET` en cualquier endpoint de `/api/v1/**` |
+| `ROLE_ADMIN` | `GET`, `POST`, `PUT`, `DELETE` en cualquier endpoint de `/api/v1/**` |
+
+> Los usuarios se registran siempre con `ROLE_USER`. Para promover a `ROLE_ADMIN` hay que modificar el campo `role` directamente en la base de datos.
+
+---
+
+### Nuevos endpoints de autenticación
+
+#### POST `/api/v1/auth/register` — Registrar usuario
+
+Crea un nuevo usuario con rol `ROLE_USER`. La contraseña se almacena encriptada con **BCrypt**.
+
+```json
+// Body (JSON)
+{
+  "username": "juan",
+  "password": "miPassword123"
+}
+```
+
+Respuestas:
+- `201 Created` → `"Usuario registrado exitosamente"`
+- `409 Conflict` → `"El usuario ya existe"`
+
+---
+
+#### POST `/api/v1/auth/login` — Iniciar sesión
+
+Autentica las credenciales y devuelve un JWT válido por **24 horas**.
+
+```json
+// Body (JSON)
+{
+  "username": "juan",
+  "password": "miPassword123"
+}
+```
+
+```json
+// Respuesta 200 OK
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqdWFuIiwicm9sZSI6..."
+}
+```
+
+Respuestas:
+- `200 OK` → `{ "token": "..." }`
+- `401 Unauthorized` → credenciales incorrectas
+
+---
+
+### ¿Cómo usar el token en Postman?
+
+1. Hacer `POST /api/v1/auth/login` y copiar el valor del campo `token`.
+2. En cada request protegido, agregar el header:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOi...
+```
+
+En Postman: pestaña **Authorization** → tipo **Bearer Token** → pegar el token.
+
+---
+
+### Arquitectura de la implementación
+
+#### Nuevos archivos creados
+
+```text
+src/main/java/com/example/bibliotecaduoc/
+├── model/
+│   └── Usuario.java                  ← entidad JPA con username, password, role
+├── repository/
+│   └── UsuarioRepository.java        ← findByUsername()
+├── dto/
+│   ├── AuthRequest.java              ← { username, password }
+│   └── AuthResponse.java             ← { token }
+├── security/
+│   ├── JwtUtil.java                  ← genera, parsea y valida tokens JWT
+│   ├── JwtFilter.java                ← filtro que valida el JWT en cada request
+│   ├── UserDetailsServiceImpl.java   ← carga el usuario desde la BD
+│   └── SecurityConfig.java           ← reglas de acceso y configuración general
+└── controller/
+    └── AuthController.java           ← endpoints /register y /login
+```
+
+---
+
+#### Flujo de autenticación (login)
+
+```
+Cliente
+  │  POST /api/v1/auth/login  { username, password }
+  ▼
+AuthController.login()
+  │  authenticationManager.authenticate(...)
+  ▼
+UserDetailsServiceImpl.loadUserByUsername()
+  │  SELECT * FROM usuarios WHERE username = ?
+  ▼
+Spring compara password recibido con el hash BCrypt guardado en BD
+  │  ¿Coinciden?
+  ├─ NO → BadCredentialsException → 401 Unauthorized
+  └─ SÍ → JwtUtil.generateToken(username, role)
+              │  firma el token con HMAC-SHA256
+              ▼
+           { "token": "eyJ..." }  → 200 OK
+```
+
+---
+
+#### Flujo de autorización (request protegido)
+
+```
+Cliente
+  │  GET /api/v1/libros
+  │  Authorization: Bearer eyJ...
+  ▼
+JwtFilter (intercepta antes que el controlador)
+  │  ¿El header Authorization existe y empieza por "Bearer "?
+  ├─ NO  → sigue sin autenticación → Spring rechaza con 403
+  └─ SÍ  → JwtUtil.validateToken(token)
+              │  ¿La firma es válida y no venció?
+              ├─ NO  → 403 Forbidden
+              └─ SÍ  → extrae username y role → registro en SecurityContext
+                            │
+                            ▼
+                    SecurityConfig evalúa reglas
+                    ¿GET /api/v1/**? → hasAnyRole("USER","ADMIN") → ✓
+                            │
+                            ▼
+                    LibroController.listarLibros()
+                            │
+                            ▼
+                    200 OK + [ { ... }, { ... } ]
+```
+
+---
+
+### Descripción de los nuevos componentes
+
+#### `JwtUtil`
+Componente `@Component` que encapsula toda la lógica de JWT usando la librería **JJWT 0.12.6**:
+- `generateToken(username, role)` → construye y firma el JWT.
+- `extractUsername(token)` → lee el `subject` del payload.
+- `extractRole(token)` → lee el claim `role` del payload.
+- `validateToken(token)` → verifica firma y vigencia; retorna `boolean`.
+
+#### `JwtFilter`
+Extiende `OncePerRequestFilter`, lo que garantiza que se ejecuta exactamente **una vez por request**. Lee el header `Authorization`, delega la validación a `JwtUtil` y registra la autenticación en el `SecurityContextHolder`.
+
+#### `UserDetailsServiceImpl`
+Implementa la interfaz `UserDetailsService` de Spring Security. Spring la detecta automáticamente y la usa durante `authenticationManager.authenticate()` para cargar el usuario desde la base de datos y comparar la contraseña con BCrypt.
+
+#### `SecurityConfig`
+Clase `@Configuration` que define el bean `SecurityFilterChain`:
+- **CSRF deshabilitado**: no es necesario en APIs REST stateless.
+- **Sesión stateless**: `SessionCreationPolicy.STATELESS`, sin cookies de sesión.
+- **Reglas de acceso**: define qué rol puede usar cada método HTTP.
+- **JwtFilter agregado**: se registra antes del `UsernamePasswordAuthenticationFilter` de Spring.
+- **`PasswordEncoder`**: bean `BCryptPasswordEncoder` para encriptar contraseñas.
+- **`AuthenticationManager`**: expuesto como bean para usarlo en `AuthController`.
+
+---
+
+### Nuevas anotaciones del proyecto
+
+| Anotación | Descripción |
+|---|---|
+| `@EnableWebSecurity` | Activa la configuración de seguridad web de Spring |
+| `@Configuration` | Indica que la clase declara beans de Spring |
+| `@Bean` | Declara un método que produce un objeto gestionado por Spring |
+| `@Component` | Marca `JwtUtil` y `JwtFilter` como beans gestionados |
+
+---
+
+### Nuevas dependencias (pom.xml)
+
+```xml
+<!-- Spring Security -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+
+<!-- JWT (JJWT 0.12.6) -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-api</artifactId>
+    <version>0.12.6</version>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-impl</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-jackson</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+```
+
+---
+
+### Propiedad agregada en `application.properties`
+
+```properties
+# Clave secreta para firmar los tokens JWT (mínimo 32 caracteres)
+# IMPORTANTE: cambiar por un valor seguro y aleatorio en producción
+jwt.secret=bibliotecaduoc-clave-secreta-jwt-2026-cambiar-en-produccion
+```
+
+---
+
+## 13) Autor
 
 - **Alvaro Maurelia**
 - **Correo:** al.maurelia@profesor.duoc.cl
+
