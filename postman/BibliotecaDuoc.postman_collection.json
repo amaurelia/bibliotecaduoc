@@ -2,10 +2,78 @@
   "info": {
     "_postman_id": "4f18b0c4-a9ed-4cc7-91c1-9f6ea6e1cf18",
     "name": "BibliotecaDuoc API",
-    "description": "Colección de endpoints para el proyecto bibliotecaduoc.",
+    "description": "Colección de endpoints para el proyecto bibliotecaduoc.\n\nFLUJO DE USO:\n1. Ejecutar 'Registrar usuario' (solo la primera vez).\n2. Ejecutar 'Login' → el token JWT se guarda automáticamente en {{token}}.\n3. Todos los demás requests ya usan {{token}} vía la autorización de la colección.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
   "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Registrar usuario",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Crea un usuario nuevo con rol ROLE_USER (solo lectura).\nPara acceso total (POST/PUT/DELETE), ejecutar en MySQL:\n  UPDATE usuarios SET role = 'ROLE_ADMIN' WHERE username = 'admin';\n\nRespuesta 201: usuario registrado.\nRespuesta 409: el usuario ya existe."
+          },
+          "response": []
+        },
+        {
+          "name": "Login (guarda token automáticamente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    console.log('Token guardado en {{token}}');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Autentica al usuario y devuelve un JWT válido por 24 horas.\nEl script de Tests guarda el token automáticamente en la variable {{token}},\nque es usada por todos los demás requests de la colección.\n\nRespuesta 200: { \"token\": \"eyJ...\" }\nRespuesta 401: credenciales incorrectas."
+          },
+          "response": []
+        }
+      ]
+    },
     {
       "name": "Autores",
       "item": [
@@ -250,6 +318,11 @@
     {
       "key": "baseUrl",
       "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "JWT generado por el endpoint Login. Se guarda automáticamente al ejecutar el request 'Login'."
     }
   ]
 }
