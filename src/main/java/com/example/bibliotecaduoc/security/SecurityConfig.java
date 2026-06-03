@@ -45,6 +45,13 @@ public class SecurityConfig {
                 // Endpoints de autenticación: públicos (no requieren token)
                 .requestMatchers("/api/v1/auth/**").permitAll()
 
+                // Swagger UI y OpenAPI docs: públicos
+                .requestMatchers(
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/v3/api-docs/**"
+                ).permitAll()
+
                 // Lectura (GET): cualquier usuario autenticado (USER o ADMIN)
                 .requestMatchers(HttpMethod.GET, "/api/v1/**").hasAnyRole("USER", "ADMIN")
 
