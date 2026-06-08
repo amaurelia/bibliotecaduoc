@@ -214,6 +214,55 @@ Anotaciones importantes:
 	- Inyección de dependencias automática.
 	- Spring inyecta una instancia de `LibroService`.
 
+### 5.1.1 ResponseEntity: qué funciones puedes usar
+
+`ResponseEntity<T>` representa una respuesta HTTP completa. Incluye:
+
+- Código de estado (por ejemplo: 200, 201, 404)
+- Cuerpo de la respuesta (el objeto `T`)
+- Encabezados HTTP
+
+En este proyecto se usa en controladores para devolver respuestas claras y también en pruebas unitarias para validar el comportamiento.
+
+Métodos de instancia más útiles:
+
+| Método | ¿Qué devuelve? | ¿Para qué sirve en pruebas? |
+|---|---|---|
+| `getStatusCode()` | `HttpStatusCode` | Verificar el estado HTTP esperado (por ejemplo `CREATED`). |
+| `getBody()` | `T` (puede ser `null`) | Obtener el objeto de respuesta para validar sus campos. |
+| `getHeaders()` | `HttpHeaders` | Validar headers como `Location` o `Content-Type`. |
+| `hasBody()` | `boolean` | Confirmar si la respuesta trae cuerpo o no. |
+| `toString()` | `String` | Útil para depuración rápida en consola. |
+| `equals()` / `hashCode()` | comparación/clave | Útil en comparaciones o colecciones (menos común en tests básicos). |
+
+Ejemplo típico de validación en un test:
+
+```java
+var respuesta = libroController.agregarLibro(libro);
+
+assertEquals(HttpStatus.CREATED, respuesta.getStatusCode());
+assertTrue(respuesta.hasBody());
+assertNotNull(respuesta.getBody());
+assertEquals("Cien años de soledad", respuesta.getBody().getTitulo());
+```
+
+Métodos estáticos útiles para construir respuestas en controladores:
+
+- `ResponseEntity.ok(...)`
+- `ResponseEntity.status(...)`
+- `ResponseEntity.created(...)`
+- `ResponseEntity.accepted()`
+- `ResponseEntity.noContent()`
+- `ResponseEntity.badRequest()`
+- `ResponseEntity.notFound()`
+- `ResponseEntity.internalServerError()`
+- `ResponseEntity.of(...)` y `ResponseEntity.ofNullable(...)`
+
+Ejemplos de uso en este proyecto:
+
+- [src/main/java/com/example/bibliotecaduoc/controller/LibroController.java](src/main/java/com/example/bibliotecaduoc/controller/LibroController.java)
+- [src/test/java/com/example/bibliotecaduoc/controller/LibroControllerTest.java](src/test/java/com/example/bibliotecaduoc/controller/LibroControllerTest.java)
+
 ### 5.2 `service` (lógica de negocio)
 
 En esta carpeta está `LibroService`.
@@ -1102,3 +1151,53 @@ jwt.secret=bibliotecaduoc-clave-secreta-jwt-2026-cambiar-en-produccion
 - **Alvaro Maurelia**
 - **Correo:** al.maurelia@profesor.duoc.cl
 
+
+---
+
+## Pruebas unitarias agregadas (JUnit + Mockito)
+
+Se agregaron pruebas unitarias enfocadas en logica de negocio, autenticacion y JWT.
+
+Archivos de prueba nuevos:
+
+- src/test/java/com/example/bibliotecaduoc/service/LibroServiceTest.java
+- src/test/java/com/example/bibliotecaduoc/service/AutorServiceTest.java
+- src/test/java/com/example/bibliotecaduoc/security/JwtUtilTest.java
+- src/test/java/com/example/bibliotecaduoc/controller/AuthControllerTest.java
+
+Cobertura funcional incluida:
+
+- LibroService:
+  - obtener libro por id (existe / no existe)
+  - actualizar libro (existe / no existe)
+  - mapeo de DTO en libros con nacionalidad
+  - guardar y eliminar libro
+
+- AutorService:
+  - obtener autor por id (existe / no existe)
+  - actualizar autor (existe / no existe)
+  - eliminar autor
+
+- JwtUtil:
+  - generacion y lectura de claims (username y role)
+  - validacion de token valido e invalido
+
+- AuthController:
+  - registro con usuario existente (409)
+  - registro exitoso (201)
+  - login exitoso con entrega de token (200)
+  - login con credenciales invalidas (401)
+
+### Como ejecutar estas pruebas
+
+En Windows PowerShell:
+
+```bash
+.\mvnw.cmd "-Dtest=LibroServiceTest,AutorServiceTest,JwtUtilTest,AuthControllerTest" test
+```
+
+Para ejecutar toda la suite:
+
+```bash
+.\mvnw.cmd test
+```
