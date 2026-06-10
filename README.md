@@ -9,6 +9,27 @@ Proyecto académico de ejemplo para aprender arquitectura por capas con Spring B
 
 ---
 
+## Índice
+
+- [1) Requisitos](#1-requisitos)
+- [2) Configuración de base de datos](#2-configuración-de-base-de-datos)
+- [3) ¿Cómo ejecutar el proyecto?](#3-cómo-ejecutar-el-proyecto)
+- [4) URL base de la API](#4-url-base-de-la-api)
+- [5) Endpoints disponibles](#5-endpoints-disponibles)
+- [6) Estructura del proyecto y explicación por capas](#6-estructura-del-proyecto-y-explicación-por-capas)
+- [7) Colección de Postman](#7-colección-de-postman)
+- [8) Dependencias principales (pom.xml)](#8-dependencias-principales-pomxml)
+- [9) JpaRepository: métodos usados en este proyecto](#9-jparepository-métodos-usados-en-este-proyecto)
+- [10) Manejador global de errores (@ControllerAdvice)](#10-manejador-global-de-errores-controlleradvice)
+- [11) ResponseEntity: manejo de respuestas HTTP](#11-responseentity-manejo-de-respuestas-http)
+- [12) WebClient y consumo de APIs externas](#12-webclient-y-consumo-de-apis-externas)
+- [13) Spring Security y autenticación JWT](#13-spring-security-y-autenticación-jwt)
+- [14) Pruebas unitarias: guía paso a paso](#14-pruebas-unitarias-guía-paso-a-paso)
+- [15) Docker: guía para principiantes](#15-docker-guía-para-principiantes)
+- [16) Autor](#16-autor)
+
+---
+
 ## 1) Requisitos
 
 - Java 17
@@ -40,6 +61,8 @@ spring.jpa.show-sql=true
 ---
 
 ## 3) ¿Cómo ejecutar el proyecto?
+
+Esta sección es para ejecución local (sin contenedores). La guía completa de Docker está en la sección **15) Docker: guía para principiantes**.
 
 ### Opción A: usando Maven Wrapper (recomendado)
 
@@ -382,7 +405,7 @@ Estas son **todas** las anotaciones usadas actualmente en el código fuente:
 
 ---
 
-## 6) Colección de Postman
+## 7) Colección de Postman
 
 Se incluye una colección lista para importar:
 
@@ -404,7 +427,7 @@ Incluye todos los endpoints:
 
 ---
 
-## 7) Dependencias principales (pom.xml)
+## 8) Dependencias principales (pom.xml)
 
 - `spring-boot-starter-webmvc`
 	- Para construir API REST.
@@ -423,7 +446,7 @@ Incluye todos los endpoints:
 
 ---
 
-## 8) JpaRepository: métodos usados en este proyecto
+## 9) JpaRepository: métodos usados en este proyecto
 
 Tanto `LibroRepository` como `AutorRepository` extienden `JpaRepository`:
 
@@ -469,7 +492,7 @@ Spring Data JPA utiliza **Hibernate** como proveedor de JPA. Hibernate traduce l
 
 ---
 
-## 9) Manejador global de errores (`@ControllerAdvice`)
+## 10) Manejador global de errores (`@ControllerAdvice`)
 
 ### ¿Qué es?
 
@@ -596,7 +619,7 @@ src/main/java/com/example/bibliotecaduoc/
 
 ---
 
-## 10) ResponseEntity: manejo de respuestas HTTP
+## 11) ResponseEntity: manejo de respuestas HTTP
 
 ### ¿Qué es `ResponseEntity`?
 
@@ -699,7 +722,7 @@ return ResponseEntity.noContent().build();
 
 ---
 
-## 11) WebClient y consumo de APIs externas
+## 12) WebClient y consumo de APIs externas
 
 ### ¿Qué es WebClient?
 
@@ -882,7 +905,7 @@ Cliente
 
 ---
 
-## 12) Spring Security y autenticación JWT
+## 13) Spring Security y autenticación JWT
 
 ### ¿Qué es Spring Security?
 
@@ -1146,58 +1169,202 @@ jwt.secret=bibliotecaduoc-clave-secreta-jwt-2026-cambiar-en-produccion
 
 ---
 
-## 13) Autor
+## 14) Pruebas unitarias: guía paso a paso
 
-- **Alvaro Maurelia**
-- **Correo:** al.maurelia@profesor.duoc.cl
+En este proyecto se dejó un test didáctico principal para explicar la base de JUnit + Mockito:
 
+- `src/test/java/com/example/bibliotecaduoc/controller/LibroControllerTest.java`
 
----
+### Objetivo de este test
 
-## Pruebas unitarias agregadas (JUnit + Mockito)
+Comprobar que el método del controlador que crea libros:
 
-Se agregaron pruebas unitarias enfocadas en logica de negocio, autenticacion y JWT.
+- responde con HTTP `201 CREATED`
+- devuelve un cuerpo no nulo
+- devuelve el libro esperado en el body
 
-Archivos de prueba nuevos:
+### Estructura que debes enseñar (Arrange - Act - Assert)
 
-- src/test/java/com/example/bibliotecaduoc/service/LibroServiceTest.java
-- src/test/java/com/example/bibliotecaduoc/service/AutorServiceTest.java
-- src/test/java/com/example/bibliotecaduoc/security/JwtUtilTest.java
-- src/test/java/com/example/bibliotecaduoc/controller/AuthControllerTest.java
+#### 1. Arrange (preparación)
 
-Cobertura funcional incluida:
+En esta fase se prepara todo lo necesario:
 
-- LibroService:
-  - obtener libro por id (existe / no existe)
-  - actualizar libro (existe / no existe)
-  - mapeo de DTO en libros con nacionalidad
-  - guardar y eliminar libro
+- datos de entrada (por ejemplo `Autor` y `Libro`)
+- comportamiento simulado del servicio usando Mockito
 
-- AutorService:
-  - obtener autor por id (existe / no existe)
-  - actualizar autor (existe / no existe)
-  - eliminar autor
+Ejemplo conceptual:
 
-- JwtUtil:
-  - generacion y lectura de claims (username y role)
-  - validacion de token valido e invalido
-
-- AuthController:
-  - registro con usuario existente (409)
-  - registro exitoso (201)
-  - login exitoso con entrega de token (200)
-  - login con credenciales invalidas (401)
-
-### Como ejecutar estas pruebas
-
-En Windows PowerShell:
-
-```bash
-.\mvnw.cmd "-Dtest=LibroServiceTest,AutorServiceTest,JwtUtilTest,AuthControllerTest" test
+```java
+Autor autor = new Autor(...);
+Libro libro = new Libro(...);
+when(libroService.saveLibro(libro)).thenReturn(libro);
 ```
 
-Para ejecutar toda la suite:
+Qué significa ese `when(...).thenReturn(...)`:
+
+- `libroService` es un mock, no el servicio real
+- no se llama base de datos
+- cuando el controlador invoque `saveLibro`, Mockito devolverá el libro simulado
+
+#### 2. Act (acción)
+
+Se ejecuta exactamente el método bajo prueba:
+
+```java
+var respuesta = libroController.agregarLibro(libro);
+```
+
+Aquí `respuesta` es un `ResponseEntity<Libro>`.
+
+#### 3. Assert (verificación)
+
+Se valida el resultado observable:
+
+- `assertNotNull(respuesta)`
+- `assertEquals(HttpStatus.CREATED, respuesta.getStatusCode())`
+- `assertNotNull(respuesta.getBody())`
+- `assertEquals("Cien años de soledad", respuesta.getBody().getTitulo())`
+
+### Ejecución de pruebas
+
+Ejecutar solo el test principal (recomendado para clase):
+
+```bash
+.\mvnw.cmd -Dtest=LibroControllerTest test
+```
+
+Ejecutar todas las pruebas existentes en el proyecto:
 
 ```bash
 .\mvnw.cmd test
 ```
+
+### Importante para alumnos: qué valida y qué no valida este test
+
+Como usa mock del servicio, este test valida la lógica del controlador, no la persistencia real en MySQL.
+
+Para validar integración real (controller + service + DB), debes usar tests de integración (`@SpringBootTest`, Testcontainers, etc.).
+
+---
+
+## 15) Docker: guía para principiantes
+
+### ¿Qué es Docker?
+
+Docker es una herramienta para ejecutar programas en contenedores.
+Un contenedor es un entorno aislado que trae todo lo necesario para correr la app.
+
+En palabras simples: en vez de instalar Java, MySQL y configuraciones manuales en cada PC, Docker lo levanta igual para todos.
+
+### ¿Qué se agregó en este proyecto?
+
+- `Dockerfile`: define cómo construir y ejecutar la API Spring Boot.
+- `docker-compose.yml`: define y levanta dos servicios juntos:
+  - `mysql` (base de datos)
+  - `app` (tu API)
+- `.dockerignore`: evita copiar archivos innecesarios al build.
+
+### Requisitos previos (una sola vez)
+
+1. Instalar Docker Desktop.
+2. Abrir Docker Desktop y esperar que diga "Engine running".
+3. Verificar instalación:
+
+```bash
+docker --version
+docker compose version
+```
+
+### Explicación de `docker-compose.yml`
+
+Servicio `mysql`:
+
+- imagen: `mysql:8.4`
+- crea base `bibliotecaduoc`
+- contraseña root: `root`
+- mapea `3307` (host) -> `3306` (contenedor)
+- guarda datos en volumen `mysql_data`
+- healthcheck para que la app espere a que MySQL esté listo
+
+Servicio `app`:
+
+- se construye desde el `Dockerfile`
+- depende de `mysql` saludable
+- expone `8080`
+- recibe variables de entorno de Spring (`SPRING_DATASOURCE_URL`, usuario, contraseña, etc.)
+
+### Flujo recomendado para alumnos
+
+#### Paso 1: levantar todo
+
+```bash
+docker compose up --build
+```
+
+Qué hace este comando:
+
+- construye imagen de la app
+- descarga imagen de MySQL si no existe
+- crea y ejecuta ambos contenedores
+- muestra logs en pantalla
+
+#### Paso 2: probar que funciona
+
+- API: `http://localhost:8080`
+- Swagger: `http://localhost:8080/swagger-ui/index.html`
+- MySQL desde host: puerto `3307`
+
+#### Paso 3: detener
+
+```bash
+docker compose down
+```
+
+#### Paso 4 (opcional): borrar también los datos de la base
+
+```bash
+docker compose down -v
+```
+
+Usa esto solo si quieres resetear completamente la BD.
+
+### Comandos útiles de diagnóstico
+
+Ver contenedores activos:
+
+```bash
+docker compose ps
+```
+
+Ver logs de la app:
+
+```bash
+docker compose logs app
+```
+
+Ver logs de MySQL:
+
+```bash
+docker compose logs mysql
+```
+
+### Errores comunes en clase y solución rápida
+
+1. "docker no se reconoce"
+   Instalar Docker Desktop y reiniciar terminal.
+
+2. Puerto 8080 ocupado
+   Cambiar mapeo en compose a otro puerto (ej. `8081:8080`).
+
+3. Puerto 3307 ocupado
+   Cambiar a otro puerto host (ej. `3308:3306`).
+
+4. La app arranca antes que MySQL
+   Ya está mitigado con `healthcheck` + `depends_on`.
+
+---
+
+## 16) Autor
+
+- **Alvaro Maurelia**
+- **Correo:** al.maurelia@profesor.duoc.cl
