@@ -1,14 +1,16 @@
 package com.example.bibliotecaduoc.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+
+import javax.crypto.SecretKey;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
 /**
  * Utilidad para generar, parsear y validar tokens JWT.
@@ -28,7 +30,7 @@ public class JwtUtil {
     /** Duración del token: 24 horas en milisegundos. */
     private static final long EXPIRATION_MS = 86_400_000L;
 
-    public JwtUtil(@Value("${jwt.secret}") String secret) {
+    public JwtUtil(@Value("${JWT_SECRET}") String secret) {
         // La clave debe tener al menos 32 caracteres (256 bits) para HMAC-SHA256
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
