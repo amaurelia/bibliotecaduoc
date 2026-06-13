@@ -32,7 +32,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       OPENMETEO_BASE_URL: ${OPENMETEO_BASE_URL}
     ports:
-      - "${APP_HOST_PORT}:${APP_HOST_PORT}"
+      - "${APP_HOST_PORT}:8080"
     restart: unless-stopped
 
 volumes:

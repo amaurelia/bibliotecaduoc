@@ -48,9 +48,10 @@ Proyecto académico de ejemplo para aprender arquitectura por capas con Spring B
 El archivo `src/main/resources/application.properties` contiene la conexión:
 
 ```properties
-spring.datasource.url=${DB_URL}
-spring.datasource.username=${DB_USERNAME}
-spring.datasource.password=${DB_PASSWORD}
+server.port=${PORT:8080}
+spring.datasource.url=${DB_URL:${MYSQL_URL}}
+spring.datasource.username=${DB_USERNAME:${MYSQLUSER}}
+spring.datasource.password=${DB_PASSWORD:${MYSQLPASSWORD}}
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 ```
@@ -81,6 +82,25 @@ $env:JWT_SECRET="una-clave-larga-y-segura-de-al-menos-32-caracteres"
 Para Docker Compose, usa archivo `.env` (no versionado). Hay una plantilla en `.env.example`.
 
 > Nota: en esta configuración **no hay valores por defecto** para credenciales/secretos. Si falta una variable de entorno, la app/compose fallará al iniciar (comportamiento intencional).
+
+### Despliegue en Railway (host)
+
+Railway permite configurar variables de entorno por servicio. Con esta configuración, la app acepta:
+
+1. Variables propias del proyecto:
+  - `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `OPENMETEO_BASE_URL`
+2. Variables típicas de MySQL en Railway (fallback):
+  - `MYSQL_URL`, `MYSQLUSER`, `MYSQLPASSWORD`
+3. Puerto dinámico del host:
+  - `PORT` (inyectado por Railway)
+
+Checklist mínimo en Railway:
+
+1. Crear servicio de base de datos MySQL en Railway.
+2. Conectar la app al servicio MySQL.
+3. Definir `JWT_SECRET` (32+ caracteres).
+4. Definir `OPENMETEO_BASE_URL=https://api.open-meteo.com`.
+5. Verificar en logs que no aparezcan placeholders no resueltos (ej: `${JWT_SECRET}`).
 
 ---
 
