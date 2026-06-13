@@ -24,9 +24,10 @@ Proyecto académico de ejemplo para aprender arquitectura por capas con Spring B
 - [11) ResponseEntity: manejo de respuestas HTTP](#11-responseentity-manejo-de-respuestas-http)
 - [12) WebClient y consumo de APIs externas](#12-webclient-y-consumo-de-apis-externas)
 - [13) Spring Security y autenticación JWT](#13-spring-security-y-autenticación-jwt)
-- [14) Pruebas unitarias: guía paso a paso](#14-pruebas-unitarias-guía-paso-a-paso)
-- [15) Docker: guía para principiantes](#15-docker-guía-para-principiantes)
-- [16) Autor](#16-autor)
+- [14) Swagger / OpenAPI](#14-swagger--openapi)
+- [15) Pruebas unitarias: guía paso a paso](#15-pruebas-unitarias-guía-paso-a-paso)
+- [16) Docker: guía para principiantes](#16-docker-guía-para-principiantes)
+- [17) Autor](#17-autor)
 
 ---
 
@@ -197,6 +198,57 @@ libroRepository.findAll().stream()
 > @Query("SELECT new com.example.bibliotecaduoc.dto.LibroNacionalidadDTO(l.titulo, l.autor.nacionalidad) FROM Libro l WHERE l.autor IS NOT NULL")
 > List<LibroNacionalidadDTO> findLibrosConNacionalidad();
 > ```
+
+### 5.7 Libro con HATEOAS
+- **Método:** `GET`
+- **URL:** `/api/v1/libros/hateoas/{id}`
+- **Descripción:** retorna un libro más una colección de links relacionados para navegar la API.
+- **¿Qué links aparecen?**
+  - `self`: enlace al mismo recurso HATEOAS.
+  - `detalle-sin-hateoas`: enlace al endpoint tradicional del libro.
+  - `coleccion`: enlace a la colección HATEOAS de libros.
+  - `autor`: enlace al autor asociado, si existe.
+
+**Ejemplo de respuesta:**
+
+```json
+{
+  "id": 1,
+  "isbn": "9780132350884",
+  "titulo": "Clean Code",
+  "editorial": "Prentice Hall",
+  "fechaPublicacion": 2008,
+  "autor": {
+    "id": 1,
+    "nombre": "Robert C. Martin",
+    "edad": 73,
+    "nacionalidad": "Estadounidense"
+  },
+  "_links": {
+    "self": {
+      "href": "http://localhost:8080/api/v1/libros/hateoas/1"
+    },
+    "detalle-sin-hateoas": {
+      "href": "http://localhost:8080/api/v1/libros/1"
+    },
+    "coleccion": {
+      "href": "http://localhost:8080/api/v1/libros/hateoas"
+    },
+    "autor": {
+      "href": "http://localhost:8080/api/v1/autores/1"
+    }
+  }
+}
+```
+
+### 5.8 Colección de libros con HATEOAS
+- **Método:** `GET`
+- **URL:** `/api/v1/libros/hateoas`
+- **Descripción:** retorna la lista de libros en formato HATEOAS.
+
+**¿Para qué sirve esto?**
+
+HATEOAS agrega links automáticos en la respuesta para que el cliente descubra rutas relacionadas sin hardcodearlas manualmente. En este proyecto se usa como ejemplo didáctico para comparar una respuesta REST tradicional vs una respuesta hipermedia.
 
 ---
 
@@ -417,13 +469,27 @@ Incluye todos los endpoints:
 - Crear libro
 - Actualizar libro
 - Eliminar libro
+- Libros con HATEOAS
+- Endpoints de autenticación JWT
+- Endpoints de autores y clima
 
 ### Cómo importarla en Postman
 
 1. Abrir Postman.
 2. Clic en **Import**.
 3. Seleccionar el archivo `postman/BibliotecaDuoc.postman_collection.json`.
-4. Ejecutar requests sobre `http://localhost:8080`.
+4. Crear un Environment con estas variables:
+
+```text
+baseUrl = http://localhost:8080
+token =
+```
+
+5. Seleccionar ese Environment en la esquina superior derecha de Postman.
+6. Ejecutar `Login`; el script guarda automáticamente el JWT en la variable de environment `token`.
+7. Los demás requests usan `Authorization: Bearer {{token}}` automáticamente.
+
+> Importante: en esta colección el token debe vivir en el **Environment** de Postman, no como variable manual pegada request por request.
 
 ---
 
@@ -443,6 +509,12 @@ Incluye todos los endpoints:
 
 - `spring-boot-starter-webmvc-test`
 	- Soporte de testing para capa web.
+
+- `springdoc-openapi-starter-webmvc-ui`
+  - Genera documentación OpenAPI y la interfaz Swagger UI.
+
+- `spring-boot-starter-hateoas`
+  - Permite construir respuestas con links hipermedia (`_links`) usando `EntityModel` y `CollectionModel`.
 
 ---
 
@@ -1169,7 +1241,61 @@ jwt.secret=bibliotecaduoc-clave-secreta-jwt-2026-cambiar-en-produccion
 
 ---
 
-## 14) Pruebas unitarias: guía paso a paso
+## 14) Swagger / OpenAPI
+
+Swagger UI permite visualizar y probar la API desde el navegador.
+
+### Dependencia necesaria en `pom.xml`
+
+```xml
+<dependency>
+  <groupId>org.springdoc</groupId>
+  <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+  <version>2.8.9</version>
+</dependency>
+```
+
+### Qué hay que permitir en Security
+
+Para que Swagger se pueda abrir sin JWT, hay que dejar públicas estas rutas en `SecurityConfig`:
+
+```java
+.requestMatchers(
+  "/swagger-ui/**",
+  "/swagger-ui.html",
+  "/v3/api-docs/**"
+).permitAll()
+```
+
+Eso permite entrar a la documentación sin autenticarse primero.
+
+### URL de acceso
+
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
+### Qué aporta Swagger en este proyecto
+
+1. Lista automáticamente los endpoints disponibles.
+2. Permite probar requests desde el navegador.
+3. Muestra los modelos y códigos HTTP.
+4. Si el endpoint devuelve HATEOAS, también se ve el JSON con sus `_links` generados automáticamente.
+
+### Nota sobre HATEOAS y Swagger en este proyecto
+
+Se agregó además esta propiedad en `application.properties`:
+
+```properties
+springdoc.enable-hateoas=false
+```
+
+Se usa para evitar un conflicto de compatibilidad entre Springdoc y HATEOAS en la combinación actual de dependencias, manteniendo:
+
+1. Swagger funcionando.
+2. Los endpoints HATEOAS funcionando.
+
+## 15) Pruebas unitarias: guía paso a paso
 
 En este proyecto se dejó un test didáctico principal para explicar la base de JUnit + Mockito:
 
@@ -1247,7 +1373,7 @@ Para validar integración real (controller + service + DB), debes usar tests de 
 
 ---
 
-## 15) Docker: guía para principiantes
+## 16) Docker: guía para principiantes
 
 ### ¿Qué es Docker?
 
@@ -1364,7 +1490,7 @@ docker compose logs mysql
 
 ---
 
-## 16) Autor
+## 17) Autor
 
 - **Alvaro Maurelia**
 - **Correo:** al.maurelia@profesor.duoc.cl
