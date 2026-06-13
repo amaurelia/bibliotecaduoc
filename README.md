@@ -48,9 +48,9 @@ Proyecto académico de ejemplo para aprender arquitectura por capas con Spring B
 El archivo `src/main/resources/application.properties` contiene la conexión:
 
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/bibliotecaduoc?createDatabaseIfNotExist=true
-spring.datasource.username=root
-spring.datasource.password=
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 ```
@@ -58,6 +58,29 @@ spring.jpa.show-sql=true
 - `createDatabaseIfNotExist=true` → crea la base de datos `bibliotecaduoc` si no existe.
 - `ddl-auto=update` → Hibernate actualiza el esquema automáticamente según la entidad `Libro`.
 - `show-sql=true` → muestra las consultas SQL generadas en la consola.
+
+### Recomendación de seguridad (credenciales)
+
+No subas credenciales reales al repositorio. Este proyecto ya está preparado para leer secretos desde variables de entorno:
+
+- `DB_URL`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `JWT_SECRET`
+
+Para desarrollo local puedes exportarlas en terminal (PowerShell):
+
+```powershell
+$env:DB_URL="jdbc:mysql://localhost:3307/bibliotecaduoc?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC"
+$env:DB_USERNAME="root"
+$env:DB_PASSWORD="tu_password"
+$env:JWT_SECRET="una-clave-larga-y-segura-de-al-menos-32-caracteres"
+.\mvnw.cmd spring-boot:run
+```
+
+Para Docker Compose, usa archivo `.env` (no versionado). Hay una plantilla en `.env.example`.
+
+> Nota: en esta configuración **no hay valores por defecto** para credenciales/secretos. Si falta una variable de entorno, la app/compose fallará al iniciar (comportamiento intencional).
 
 ---
 
@@ -1407,8 +1430,8 @@ Servicio `mysql`:
 
 - imagen: `mysql:8.4`
 - crea base `bibliotecaduoc`
-- contraseña root: `root`
-- mapea `3307` (host) -> `3306` (contenedor)
+- contraseña root configurable por `.env` (`MYSQL_ROOT_PASSWORD`)
+- mapea `${MYSQL_HOST_PORT}` (host) -> `${MYSQL_CONTAINER_PORT}` (contenedor)
 - guarda datos en volumen `mysql_data`
 - healthcheck para que la app espere a que MySQL esté listo
 
@@ -1416,8 +1439,18 @@ Servicio `app`:
 
 - se construye desde el `Dockerfile`
 - depende de `mysql` saludable
-- expone `8080`
-- recibe variables de entorno de Spring (`SPRING_DATASOURCE_URL`, usuario, contraseña, etc.)
+- expone `${APP_HOST_PORT}:8080`
+- recibe variables de entorno para Spring (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, etc.)
+
+### Variables de `.env` para puertos
+
+```text
+MYSQL_HOST_PORT=3307
+MYSQL_CONTAINER_PORT=3306
+APP_HOST_PORT=8080
+```
+
+Con esto puedes cambiar puertos sin editar el `docker-compose.yml`.
 
 ### Flujo recomendado para alumnos
 
@@ -1438,7 +1471,7 @@ Qué hace este comando:
 
 - API: `http://localhost:8080`
 - Swagger: `http://localhost:8080/swagger-ui/index.html`
-- MySQL desde host: puerto `3307`
+- MySQL desde host: puerto `${MYSQL_HOST_PORT}` (por defecto `3307`)
 
 #### Paso 3: detener
 
@@ -1480,10 +1513,10 @@ docker compose logs mysql
    Instalar Docker Desktop y reiniciar terminal.
 
 2. Puerto 8080 ocupado
-   Cambiar mapeo en compose a otro puerto (ej. `8081:8080`).
+  Cambiar `APP_HOST_PORT` en `.env` (ej. `8081`).
 
 3. Puerto 3307 ocupado
-   Cambiar a otro puerto host (ej. `3308:3306`).
+  Cambiar `MYSQL_HOST_PORT` en `.env` (ej. `3308`).
 
 4. La app arranca antes que MySQL
    Ya está mitigado con `healthcheck` + `depends_on`.
