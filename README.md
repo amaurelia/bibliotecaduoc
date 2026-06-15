@@ -27,7 +27,8 @@ Proyecto académico de ejemplo para aprender arquitectura por capas con Spring B
 - [14) Swagger / OpenAPI](#14-swagger--openapi)
 - [15) Pruebas unitarias: guía paso a paso](#15-pruebas-unitarias-guía-paso-a-paso)
 - [16) Docker: guía para principiantes](#16-docker-guía-para-principiantes)
-- [17) Autor](#17-autor)
+- [17) Despliegue en Railway (GitHub + MySQL)](#17-despliegue-en-railway-github--mysql)
+- [18) Autor](#18-autor)
 
 ---
 
@@ -82,27 +83,6 @@ $env:JWT_SECRET="una-clave-larga-y-segura-de-al-menos-32-caracteres"
 Para Docker Compose, usa archivo `.env` (no versionado). Hay una plantilla en `.env.example`.
 
 > Nota: en esta configuración **no hay valores por defecto** para credenciales/secretos. Si falta una variable de entorno, la app/compose fallará al iniciar (comportamiento intencional).
-
-### Despliegue en Railway (host)
-
-Railway permite configurar variables de entorno por servicio. Con esta configuración, la app acepta:
-
-1. Variables propias del proyecto:
-  - `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `OPENMETEO_BASE_URL`
-2. Variables típicas de MySQL en Railway (fallback):
-  - `MYSQL_URL`, `MYSQLUSER`, `MYSQLPASSWORD`
-3. Puerto dinámico del host:
-  - `PORT` (inyectado por Railway)
-
-Checklist mínimo en Railway:
-
-1. Crear servicio de base de datos MySQL en Railway.
-2. Conectar la app al servicio MySQL.
-3. Definir `JWT_SECRET` (32+ caracteres).
-4. Definir `OPENMETEO_BASE_URL=https://api.open-meteo.com`.
-5. Verificar en logs que no aparezcan placeholders no resueltos (ej: `${JWT_SECRET}`).
-
----
 
 ## 3) ¿Cómo ejecutar el proyecto?
 
@@ -1543,7 +1523,35 @@ docker compose logs mysql
 
 ---
 
-## 17) Autor
+## 17) Despliegue en Railway (GitHub + MySQL)
+
+Guía rápida para publicar esta API en https://railway.com:
+
+1. En Railway, crea un proyecto nuevo.
+2. Elige la opción de desplegar desde GitHub.
+3. Conecta tu cuenta GitHub y selecciona el repositorio Spring Boot.
+4. Railway detectará el proyecto y hará el primer deploy.
+5. Agrega un servicio de base de datos MySQL dentro del mismo proyecto.
+6. Desde MySQL, obtén las credenciales (host, puerto, database, username, password).
+7. Vuelve al servicio de la app y define estas variables de entorno:
+   - `DB_URL=jdbc:mysql://HOST:PUERTO/BASE?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC`
+   - `DB_USERNAME=TU_USUARIO_MYSQL`
+   - `DB_PASSWORD=TU_PASSWORD_MYSQL`
+   - `JWT_SECRET=CLAVE_LARGA_Y_SEGURA_MIN_32_CARACTERES`
+   - `OPENMETEO_BASE_URL=https://api.open-meteo.com`
+8. Haz redeploy de la app para que tome los cambios de variables.
+9. En `Settings > Domains`, genera un dominio público para la app.
+
+Si todo sale bien:
+
+- Railway mostrará el despliegue en estado exitoso.
+- En GitHub, el commit asociado al deploy aparecerá con tick verde.
+- La base URL de tus endpoints quedará así:
+  - `https://TU-DOMINIO-RAILWAY`
+
+---
+
+## 18) Autor
 
 - **Alvaro Maurelia**
 - **Correo:** al.maurelia@profesor.duoc.cl
